@@ -1,5 +1,4 @@
 /*** APP ***/
-import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import {
@@ -8,87 +7,76 @@ import {
   InMemoryCache,
   gql,
   useQuery,
-  useMutation,
 } from "@apollo/client";
+
 
 import { link } from "./link.js";
 import { Subscriptions } from "./subscriptions.jsx";
 import { Layout } from "./layout.jsx";
 import "./index.css";
 
-const ALL_PEOPLE = gql`
-  query AllPeople {
-    people {
+const PERSON_1 = gql`
+  query Person {
+    person {
       id
       name
     }
   }
 `;
 
-const ADD_PERSON = gql`
-  mutation AddPerson($name: String) {
-    addPerson(name: $name) {
-      id
-      name
-    }
-  }
-`;
+const numRows = 500;
+const numCols = 10;
 
 function App() {
-  const [name, setName] = useState("");
-  const { loading, data } = useQuery(ALL_PEOPLE);
-
-  const [addPerson] = useMutation(ADD_PERSON, {
-    update: (cache, { data: { addPerson: addPersonData } }) => {
-      const peopleResult = cache.readQuery({ query: ALL_PEOPLE });
-
-      cache.writeQuery({
-        query: ALL_PEOPLE,
-        data: {
-          ...peopleResult,
-          people: [...peopleResult.people, addPersonData],
-        },
-      });
-    },
-  });
+  const rows = [];
+  for (let i = 0; i < numRows; i++) {
+    rows.push(<Row key={i}/>);
+  }
 
   return (
     <main>
-      <h3>Home</h3>
-      <div className="add-person">
-        <label htmlFor="name">Name</label>
-        <input
-          type="text"
-          name="name"
-          value={name}
-          onChange={(evt) => setName(evt.target.value)}
-        />
-        <button
-          onClick={() => {
-            addPerson({ variables: { name } });
-            setName("");
-          }}
-        >
-          Add person
-        </button>
-      </div>
-      <h2>Names</h2>
-      {loading ? (
-        <p>Loading…</p>
-      ) : (
-        <ul>
-          {data?.people.map((person) => (
-            <li key={person.id}>{person.name}</li>
-          ))}
-        </ul>
-      )}
+      <h2>Lots of People</h2>
+      {rows}
     </main>
+  );
+}
+
+function Row() {
+  const johns = [];
+  for (let i = 0; i < numCols; i++) {
+    johns.push(<John key={i}/>);
+  }
+
+  return (
+    <div style={{display: "flex", flexDirection: "row"}}>
+      {johns}
+    </div>
+
+  );
+}
+
+function John() {
+  const {loading, data} = useQuery(PERSON_1, {
+    //fetchPolicy: "no-cache"
+  });
+
+  return (
+    <div style={{border: "1px solid black", margin: "5px", padding: "5px"}}>
+      {loading ? (
+        <h2>Loading...</h2>
+      ) : (
+        <h2>
+          {data.person.name}
+        </h2>
+      )}
+    </div>
   );
 }
 
 const client = new ApolloClient({
   cache: new InMemoryCache(),
   link,
+  queryDeduplication: true,
 });
 
 const container = document.getElementById("root");
@@ -96,7 +84,7 @@ const root = createRoot(container);
 
 root.render(
   <ApolloProvider client={client}>
-    <Router>
+  <Router>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<App />} />

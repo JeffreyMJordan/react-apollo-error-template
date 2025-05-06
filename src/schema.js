@@ -28,7 +28,11 @@ const QueryType = new GraphQLObjectType({
       type: new GraphQLList(PersonType),
       resolve: () => peopleData,
     },
-  },
+    person: {
+        type: PersonType,
+        resolve: () => peopleData[0],
+      },
+    },
 });
 
 const MutationType = new GraphQLObjectType({

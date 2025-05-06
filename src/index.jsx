@@ -57,8 +57,7 @@ function Row() {
 
 function John() {
   const {loading, data} = useQuery(PERSON_1, {
-    //fetchPolicy: "network-only"
-    batching: true,
+    //fetchPolicy: "no-cache"
   });
 
   return (
